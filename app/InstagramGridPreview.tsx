@@ -18,13 +18,12 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { X, Plus, Eye, EyeOff, Trash2, ImagePlus } from 'lucide-react';
+import { X, Plus, Eye, EyeOff, Trash2, ImagePlus, ChevronDown } from 'lucide-react';
 
 const TARGET_WIDTH = 1080;
 const TARGET_HEIGHT = 1350;
 const STORAGE_KEY = 'gridded:images';
 
-// Individual draggable tile
 function SortableTile({ image, isPreviewMode, onDelete }) {
   const {
     attributes,
@@ -41,7 +40,7 @@ function SortableTile({ image, isPreviewMode, onDelete }) {
     opacity: isDragging ? 0.4 : 1,
     zIndex: isDragging ? 10 : 'auto',
     aspectRatio: '3/4',
-    touchAction: 'none', // prevent page-pan during drag on mobile
+    touchAction: 'none',
   };
 
   return (
@@ -75,7 +74,7 @@ function SortableTile({ image, isPreviewMode, onDelete }) {
   );
 }
 
-export default function InstagramGridPreview() {
+export default function InstaGridView() {
   const [images, setImages] = useState([]);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
@@ -85,13 +84,11 @@ export default function InstagramGridPreview() {
   const [storageWarning, setStorageWarning] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Sensors for dnd-kit: mouse, touch, and keyboard all supported
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 8 },
     }),
     useSensor(TouchSensor, {
-      // Long-press for 200ms to start drag on touch devices
       activationConstraint: { delay: 200, tolerance: 8 },
     }),
     useSensor(KeyboardSensor, {
@@ -99,7 +96,6 @@ export default function InstagramGridPreview() {
     })
   );
 
-  // Load saved grid from localStorage on first mount (client-side only)
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -113,7 +109,6 @@ export default function InstagramGridPreview() {
     setIsHydrated(true);
   }, []);
 
-  // Save to localStorage on every change (after initial hydration)
   useEffect(() => {
     if (!isHydrated) return;
     try {
@@ -125,9 +120,6 @@ export default function InstagramGridPreview() {
     }
   }, [images, isHydrated]);
 
-  // Crops + resizes an uploaded image to 1080x1350 (3:4) using canvas.
-  // Uses URL.createObjectURL instead of FileReader — handles large iPhone
-  // photos far more reliably (no giant base64 strings in memory).
   const processFile = useCallback((file) => {
     return new Promise((resolve, reject) => {
       if (!file.type.startsWith('image/')) {
@@ -205,12 +197,11 @@ export default function InstagramGridPreview() {
     if (e.target.files) {
       handleFiles(e.target.files);
     } else {
-      setErrorMessage('Upload event fired but no file list. iOS may be blocking — try a different photo or browser.');
+      setErrorMessage('Upload event fired but no file list.');
     }
     e.target.value = '';
   };
 
-  // File-drop zone handlers (desktop only — mobile uses tap)
   const handleDropZoneDragOver = (e) => {
     e.preventDefault();
     if (e.dataTransfer.types.includes('Files')) setIsDraggingFile(true);
@@ -225,7 +216,6 @@ export default function InstagramGridPreview() {
     if (e.dataTransfer.files?.length) handleFiles(e.dataTransfer.files);
   };
 
-  // dnd-kit reorder
   const handleDragEnd = (event) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
@@ -257,50 +247,79 @@ export default function InstagramGridPreview() {
         color: '#1A1814',
         backgroundImage: 'radial-gradient(circle at 20% 0%, rgba(193, 102, 65, 0.04) 0%, transparent 50%), radial-gradient(circle at 80% 100%, rgba(193, 102, 65, 0.03) 0%, transparent 50%)',
       }}>
-        {/* Header */}
-        <header className="border-b border-stone-300/60 px-4 sm:px-6 py-4 sm:py-5">
-          <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
-            <div className="flex items-baseline gap-3 min-w-0">
-              <h1 style={{
-                fontFamily: '"Fraunces", serif',
-                fontSize: 'clamp(1.5rem, 5vw, 1.75rem)',
-                fontWeight: 600,
-                letterSpacing: '-0.02em',
-                lineHeight: 1,
-              }}>
-                Gridded<span style={{ color: '#C16641' }}>.</span>
-              </h1>
-              <span className="text-[10px] sm:text-xs uppercase tracking-widest text-stone-500 hidden sm:inline">
-                Instagram feed preview
-              </span>
-            </div>
-            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-              {images.length > 0 && (
-                <>
-                  <button
-                    onClick={() => setIsPreviewMode(p => !p)}
-                    className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs uppercase tracking-wider rounded-full transition-colors hover:bg-stone-200/60 active:scale-95"
-                    style={{ color: '#1A1814' }}
-                  >
-                    {isPreviewMode ? <EyeOff size={14} /> : <Eye size={14} />}
-                    <span className="hidden xs:inline sm:inline">{isPreviewMode ? 'Edit' : 'Preview'}</span>
-                  </button>
-                  <button
-                    onClick={clearAll}
-                    className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs uppercase tracking-wider rounded-full transition-colors hover:bg-red-50 hover:text-red-700 active:scale-95"
-                    aria-label="Clear all images"
-                  >
-                    <Trash2 size={14} />
-                    <span className="hidden sm:inline">Clear</span>
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </header>
 
-        <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
-          {/* Profile mockup */}
+        {/* HERO */}
+        <section className="text-center px-4 pt-14 sm:pt-20 pb-8 sm:pb-10">
+          <div className="max-w-2xl mx-auto">
+            {/* Badge */}
+            <div
+              className="inline-flex items-center px-3.5 py-1 rounded-full text-[10px] uppercase tracking-[0.15em] mb-7 sm:mb-9"
+              style={{
+                color: '#C16641',
+                border: '1px solid rgba(193, 102, 65, 0.35)',
+                backgroundColor: 'rgba(193, 102, 65, 0.04)',
+                fontWeight: 500,
+              }}
+            >
+              Free · 100% Private
+            </div>
+
+            {/* Brand wordmark */}
+            <h2
+              className="mb-5 sm:mb-7"
+              style={{
+                fontFamily: '"Fraunces", serif',
+                fontSize: 'clamp(1.125rem, 3vw, 1.375rem)',
+                fontWeight: 500,
+                letterSpacing: '0.005em',
+                color: '#1A1814',
+                opacity: 0.7,
+              }}
+            >
+              InstaGrid View<span style={{ color: '#C16641' }}>.</span>
+            </h2>
+
+            {/* Headline */}
+            <h1
+              style={{
+                fontFamily: '"Fraunces", serif',
+                fontSize: 'clamp(2.125rem, 7vw, 3.5rem)',
+                fontWeight: 500,
+                letterSpacing: '-0.028em',
+                lineHeight: 1.08,
+                color: '#1A1814',
+                marginBottom: '1.25rem',
+              }}
+            >
+              See your Instagram feed before you post it.
+            </h1>
+
+            {/* Subheadline */}
+            <p
+              className="max-w-xl mx-auto mb-9 sm:mb-12"
+              style={{
+                fontSize: 'clamp(0.95rem, 2.3vw, 1.0625rem)',
+                color: '#5C5547',
+                lineHeight: 1.6,
+              }}
+            >
+              Upload your photos, arrange the grid visually, and know exactly how your profile will look. Auto-cropped to 3:4 portrait. Your images never leave your browser.
+            </p>
+
+            {/* Chevron scroll cue */}
+            <ChevronDown
+              size={22}
+              strokeWidth={1.5}
+              className="mx-auto animate-bounce"
+              style={{ color: 'rgba(120, 113, 100, 0.5)' }}
+              aria-hidden="true"
+            />
+          </div>
+        </section>
+
+        {/* TOOL */}
+        <main className="max-w-2xl mx-auto px-4 sm:px-6 pb-8 sm:pb-10">
+          {/* Profile mockup — kept avatar-left for Instagram-style visual fidelity */}
           <section className="mb-6 sm:mb-8">
             <div className="flex items-start gap-4 sm:gap-8">
               <div
@@ -330,7 +349,29 @@ export default function InstagramGridPreview() {
             </div>
           </section>
 
-          <div className="border-t border-stone-300/60 mb-1"></div>
+          <div className="border-t border-stone-300/60"></div>
+
+          {/* Action buttons — centered, only when images exist */}
+          {images.length > 0 && (
+            <div className="flex items-center justify-center gap-2 py-4">
+              <button
+                onClick={() => setIsPreviewMode(p => !p)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] sm:text-xs uppercase tracking-wider rounded-full transition-colors hover:bg-stone-200/60 active:scale-95"
+                style={{ color: '#1A1814' }}
+              >
+                {isPreviewMode ? <EyeOff size={14} /> : <Eye size={14} />}
+                <span>{isPreviewMode ? 'Edit' : 'Preview'}</span>
+              </button>
+              <button
+                onClick={clearAll}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] sm:text-xs uppercase tracking-wider rounded-full transition-colors hover:bg-red-50 hover:text-red-700 active:scale-95"
+                aria-label="Clear all images"
+              >
+                <Trash2 size={14} />
+                <span>Clear</span>
+              </button>
+            </div>
+          )}
 
           {/* Storage warning */}
           {storageWarning && (
@@ -353,7 +394,7 @@ export default function InstagramGridPreview() {
             </div>
           )}
 
-          {/* Grid */}
+          {/* Grid or empty state */}
           {images.length > 0 ? (
             <section
               onDragOver={handleDropZoneDragOver}
@@ -416,7 +457,7 @@ export default function InstagramGridPreview() {
               onDrop={handleDropZoneDrop}
               className="block cursor-pointer transition-all touch-manipulation"
               style={{
-                marginTop: '2rem',
+                marginTop: '1.5rem',
                 padding: '3rem 1.5rem',
                 border: `2px dashed ${isDraggingFile ? '#C16641' : 'rgba(120, 113, 100, 0.4)'}`,
                 backgroundColor: isDraggingFile ? 'rgba(193, 102, 65, 0.05)' : 'transparent',
@@ -436,13 +477,9 @@ export default function InstagramGridPreview() {
               }}>
                 Start building your grid
               </h2>
-              <p className="text-xs sm:text-sm text-stone-600 mb-1">
-                <span className="hidden sm:inline">Drop images here or </span>
-                <span className="sm:hidden">Tap to upload</span>
-                <span className="hidden sm:inline">click to upload</span>
-              </p>
-              <p className="text-[10px] sm:text-xs text-stone-500">
-                Auto-cropped to 1080 × 1350 (3:4 portrait)
+              <p className="text-xs sm:text-sm text-stone-600">
+                <span className="hidden sm:inline">Drop images here or click to upload</span>
+                <span className="sm:hidden">Tap to upload from your photos</span>
               </p>
             </label>
           )}
@@ -452,29 +489,6 @@ export default function InstagramGridPreview() {
               Processing images…
             </p>
           )}
-
-          {/* iOS Chrome help — collapsed by default, available when needed */}
-          <details className="mt-6 group">
-            <summary className="text-center text-[10px] sm:text-xs text-stone-500 cursor-pointer hover:text-stone-700 select-none list-none uppercase tracking-widest">
-              <span className="group-open:hidden">Upload not working on iPhone?</span>
-              <span className="hidden group-open:inline">Hide help</span>
-            </summary>
-            <div className="mt-3 max-w-md mx-auto p-4 bg-white/60 border border-stone-200 rounded text-stone-700 text-xs sm:text-sm leading-relaxed">
-              <p className="mb-2">
-                <strong>If you&rsquo;re on iPhone and photos won&rsquo;t upload:</strong> iOS limits what photos your browser can access by default.
-              </p>
-              <p className="mb-2">To fix it:</p>
-              <ol className="list-decimal list-inside space-y-1 ml-1">
-                <li>Open <strong>Settings</strong> on your iPhone</li>
-                <li>Scroll down and tap <strong>Chrome</strong> (or whichever browser you&rsquo;re using)</li>
-                <li>Tap <strong>Photos</strong></li>
-                <li>Choose <strong>&ldquo;All Photos&rdquo;</strong></li>
-              </ol>
-              <p className="mt-2 text-stone-500">
-                Return to this page and try again.
-              </p>
-            </div>
-          </details>
 
           {images.length > 0 && !isPreviewMode && (
             <p className="text-center text-[10px] sm:text-xs text-stone-500 mt-6 uppercase tracking-widest">
