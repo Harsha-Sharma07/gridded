@@ -279,6 +279,11 @@ export default function InstaGridView() {
               InstaGrid View<span style={{ color: '#C16641' }}>.</span>
             </h2>
 
+            {/* Created by */}
+            <p style={{ fontSize: '0.8rem', color: '#5C5547', fontStyle: 'italic', marginBottom: '1.5rem' }}>
+              Created by Harsha.social
+            </p>
+
             {/* Headline */}
             <h1
               style={{
